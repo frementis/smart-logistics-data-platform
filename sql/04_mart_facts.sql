@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS mart.market_price_facts (
     weight_category VARCHAR(4) NOT NULL,
 
     organization_id INTEGER,
+    price_type SMALLINT,
 
     price_rub NUMERIC(18, 2) NOT NULL,
     price_per_km NUMERIC(18, 4) NOT NULL,
