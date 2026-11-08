@@ -1,0 +1,28 @@
+
+services:
+  postgres:
+    image: postgres:17
+    container_name: smart-logistics-db
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_DB: deals_bigdata
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+
+    ports:
+      - "5432:5432"
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./sql/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
+      - ./sql/synthetic.sql:/docker-entrypoint-initdb.d/02_synthetic.sql:ro
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app -d deals_bigdata"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  postgres_data:

@@ -1,0 +1,24 @@
+# Environment and secrets
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# Logs
+logs/
+*.log
+
+# Temporary files
+*.tmp
+*.bak
+
+# Other ML artifacts
+*.pkl
+
+# IDE
+.vscode/
+.idea/
