@@ -69,8 +69,15 @@ function Invoke-SqlFile {
 
     Write-Host "`nВыполнение $File..."
 
-    Get-Content ".\sql\$File" -Raw |
-        docker compose exec -T postgres psql -U app -d deals_bigdata -v ON_ERROR_STOP=1
+    $containerPath = "/tmp/$File"
+
+    docker compose cp ".\sql\$File" "postgres:$containerPath"
+
+    if ($LASTEXITCODE -ne 0) {
+        throw "Ошибка копирования SQL-файла: $File"
+    }
+
+    docker compose exec -T postgres psql -U app -d deals_bigdata -v ON_ERROR_STOP=1 -f $containerPath
 
     if ($LASTEXITCODE -ne 0) {
         throw "Ошибка выполнения SQL-файла: $File"
@@ -98,7 +105,7 @@ foreach ($file in $initialSql) {
 
 ```powershell
 python -m etl.run
-python .\scripts\diagnostics\python\run_body_groups.py
+python -m scripts.diagnostics.python.run_body_groups
 ```
 
 **Загрузка фактов, агрегатов и справочников:**
@@ -122,8 +129,20 @@ foreach ($file in $martSql) {
 python -m etl.train
 python -m etl.predict
 ```
-
 Модель сохраняется в `models/catboost_price_model.cbm`, результаты прогнозирования в `mart.ml_predictions`
+
+
+## Тестирование
+
+Запуск тестов:
+
+```powershell
+python -m pytest -v
+```
+Проверяются:
+- качество данных: конвертация валют, категории веса и объёма, валидация и причины карантина;
+- ETL-загрузка: преобразование данных, обработка пропусков, сериализация и формирование SQL-запросов;
+- интеграция: идемпотентность загрузчиков и перемещение записей между таблицами.
 
 ## 5. Реализовано
 
