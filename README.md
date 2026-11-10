@@ -34,12 +34,16 @@ smart-logistics/
 ├── etl/               # ETL и ML-модули
 ├── models/            # Обученная модель
 ├── scripts/
-│   └── diagnostics/   # Диагностические скрипты
+│   ├── diagnostics/   # Диагностические скрипты
+│   └──Invoke-SqlFile.ps1
 ├── sql/               # SQL-схемы и витрины
 ├── tests/             # Автоматические тесты
 ├── docker-compose.yml
+├── .env.example
 ├── requirements.txt
-└── README.md
+├── README.md
+├── run_mart_sql.ps1   # Построение витрин
+└── run_initial_sql.ps1# Инициализация таблиц
 ```
 
 ## 4. Запуск проекта
@@ -59,46 +63,9 @@ docker compose up -d
 ```
 
 
-**Подготовка базы данных:**
-
-SQL-скрипты выполняются из корня проекта через PostgreSQL в Docker.
-
+**Создание схем и таблиц:**
 ```powershell
-function Invoke-SqlFile {
-    param([string]$File)
-
-    Write-Host "`nВыполнение $File..."
-
-    $containerPath = "/tmp/$File"
-
-    docker compose cp ".\sql\$File" "postgres:$containerPath"
-
-    if ($LASTEXITCODE -ne 0) {
-        throw "Ошибка копирования SQL-файла: $File"
-    }
-
-    docker compose exec -T postgres psql -U app -d deals_bigdata -v ON_ERROR_STOP=1 -f $containerPath
-
-    if ($LASTEXITCODE -ne 0) {
-        throw "Ошибка выполнения SQL-файла: $File"
-    }
-}
-```
-
-**Создание Core и Mart:**
-
-```powershell
-$initialSql = @(
-    "01_core.sql",
-    "02_core_body_groups.sql",
-    "03_mart_schema.sql",
-    "04_mart_facts.sql",
-    "09_ml_predictions.sql"
-)
-
-foreach ($file in $initialSql) {
-    Invoke-SqlFile $file
-}
+.\run_initial_sql.ps1
 ```
 
 **ETL и построение витрин:**
@@ -108,19 +75,9 @@ python -m etl.run
 python -m scripts.diagnostics.python.run_body_groups
 ```
 
-**Загрузка фактов, агрегатов и справочников:**
-
+**Построение витрин**
 ```powershell
-$martSql = @(
-    "05_load_mart_facts.sql",
-    "06_build_market_prices.sql",
-    "07_dimensions.sql",
-    "08_mart_foreign_keys.sql"
-)
-
-foreach ($file in $martSql) {
-    Invoke-SqlFile $file
-}
+.\run_mart_sql.ps1
 ```
 
 **Обучение и прогнозирование:**
@@ -157,6 +114,7 @@ python -m pytest -v
 
 ## 6. Результаты
 
+```text
 Исходных записей - 300 000
 Загружено в Core - 298 369
 Карантин - 1 631
@@ -164,6 +122,7 @@ python -m pytest -v
 Агрегированных групп - 202 899
 ML-прогнозов - 17 598
 Автоматических тестов - 38
+```
 
 **Метрики CatBoost на тестовой выборке:**
 ```text

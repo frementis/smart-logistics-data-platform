@@ -30,8 +30,19 @@ FROM public.prices p
 WHERE FALSE;
 
 -- Первичный ключ
-ALTER TABLE core.prices
-    ADD CONSTRAINT core_prices_pkey PRIMARY KEY (id);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM pg_constraint
+        WHERE conrelid = 'core.prices'::regclass
+          AND contype = 'p'
+    ) THEN
+        ALTER TABLE core.prices
+            ADD CONSTRAINT core_prices_pkey PRIMARY KEY (id);
+    END IF;
+END
+$$;
 
 -- Таблица некорректных записей
 CREATE TABLE IF NOT EXISTS core.dq_quarantine_prices (

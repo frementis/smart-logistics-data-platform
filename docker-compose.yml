@@ -2,7 +2,6 @@
 services:
   postgres:
     image: postgres:17
-    container_name: smart-logistics-db
     restart: unless-stopped
 
     environment:
@@ -11,7 +10,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
 
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
 
     volumes:
       - postgres_data:/var/lib/postgresql/data
