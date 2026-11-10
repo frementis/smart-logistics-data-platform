@@ -4,27 +4,24 @@ import os
 from dotenv import load_dotenv
 from sqlalchemy import URL, create_engine
 
-# Переменные из файла .env
 load_dotenv()
 
-# Получаем пароль PostgreSQL
 password = os.getenv("POSTGRES_PASSWORD")
-
 if not password:
-    raise RuntimeError("POSTGRES_PASSWORD не найден в файле .env")
+    raise RuntimeError("POSTGRES_PASSWORD not found in .env")
 
-# Адреса подключения
+try:
+    port = int(os.getenv("POSTGRES_PORT", "5432"))
+except ValueError as exc:
+    raise RuntimeError("POSTGRES_PORT must be an integer") from exc
+
 database_url = URL.create(
     drivername="postgresql+psycopg",
     username="app",
     password=password,
     host="localhost",
-    port=5432,
+    port=port,
     database="deals_bigdata",
 )
 
-# Объект подключения
-engine = create_engine(
-    database_url,
-    pool_pre_ping=True,
-)
+engine = create_engine(database_url, pool_pre_ping=True)
